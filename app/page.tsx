@@ -3,6 +3,8 @@ import Header from "@/app/components/Header";
 import Hero from "@/app/components/Hero";
 import Features from "@/app/components/Features";
 import Footer from "@/app/components/Footer";
+import CtaSection from "./components/CtaSection";
+import Testimonials from "./components/Testimonials";
 
 export default function HomePage() {
   return (
@@ -11,6 +13,8 @@ export default function HomePage() {
       <main className="flex-grow">
         <Hero />
         <Features />
+        <CtaSection />
+        <Testimonials />
       </main>
       <Footer />
     </div>
