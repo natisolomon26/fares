@@ -1,10 +1,10 @@
 // src/app/page.tsx
-import Header from "@/app/components/Header";
-import Hero from "@/app/components/Hero";
-import Features from "@/app/components/Features";
-import Footer from "@/app/components/Footer";
-import CtaSection from "./components/CtaSection";
-import Testimonials from "./components/Testimonials";
+import Header from "@/app/components/landing/Header";
+import Hero from "@/app/components/landing/Hero";
+import Features from "@/app/components/landing/Features";
+import Footer from "@/app/components/landing/Footer";
+import CtaSection from "./components/landing/CtaSection";
+import Testimonials from "./components/landing/Testimonials";
 
 export default function HomePage() {
   return (

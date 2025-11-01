@@ -1,52 +1,42 @@
 // src/app/signup/page.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import AuthCard from "@/app/components/auth/AuthCard";
-import AuthLink from "@/app/components/auth/AuthLink";
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
+import { signUp } from '@/actions/auth';
+import AuthCard from '@/app/components/auth/AuthCard';
+import AuthLink from '@/app/components/auth/AuthLink';
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-70"
+    >
+      {pending ? 'Creating account...' : 'Create Account'}
+    </button>
+  );
+}
 
 export default function SignupPage() {
-  const [churchName, setChurchName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
+      const [state, formAction] = useActionState(signUp, null);
     
-    setLoading(true);
-    
-    // TODO: Replace with real signup API
-    console.log("Signup attempt:", { churchName, email, password });
-    
-    setTimeout(() => {
-      setLoading(false);
-      router.push("/dashboard"); // or verification page
-    }, 1000);
-  };
-
   return (
     <AuthCard
       title="Create Your Church Account"
       subtitle="Get started with GraceChurchMS in minutes"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form action={formAction} className="space-y-6">
         <div>
-          <label htmlFor="church" className="block text-sm font-medium text-text-primary mb-1">
+          <label htmlFor="churchName" className="block text-sm font-medium text-text-primary mb-1">
             Church Name
           </label>
           <input
-            id="church"
+            id="churchName"
+            name="churchName"
             type="text"
-            value={churchName}
-            onChange={(e) => setChurchName(e.target.value)}
             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none transition"
             placeholder="Grace Community Church"
             required
@@ -59,9 +49,8 @@ export default function SignupPage() {
           </label>
           <input
             id="email"
+            name="email"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none transition"
             placeholder="admin@yourchurch.org"
             required
@@ -74,40 +63,22 @@ export default function SignupPage() {
           </label>
           <input
             id="password"
+            name="password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none transition"
-            placeholder="At least 8 characters"
+            placeholder="At least 6 characters"
             required
           />
         </div>
 
-        <div>
-          <label htmlFor="confirm" className="block text-sm font-medium text-text-primary mb-1">
-            Confirm Password
-          </label>
-          <input
-            id="confirm"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none transition"
-            required
-          />
-        </div>
+        {/* Display error */}
+        {state && 'message' in state && (
+          <p className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">
+            {state.message}
+          </p>
+        )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-3 px-4 rounded-lg font-medium text-white transition ${
-            loading
-              ? "bg-primary-400 cursor-not-allowed"
-              : "bg-primary-600 hover:bg-primary-700"
-          }`}
-        >
-          {loading ? "Creating account..." : "Create Account"}
-        </button>
+        <SubmitButton />
       </form>
 
       <AuthLink

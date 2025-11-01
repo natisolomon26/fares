@@ -1,7 +1,7 @@
 // src/components/dashboard/DashboardLayout.tsx
 import { ReactNode } from "react";
-import Sidebar from "./Sidebar";
-import Header from "./Header";
+import Sidebar from "../layout/Sidebar";
+import Header from "../layout/Header";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
@@ -12,7 +12,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Main Content */}
       <div className="flex flex-col flex-1">
         <Header />
-        <main className="flex-1 p-6 md:p-8">{children}</main>
+        <main className="flex-1">{children}</main>
       </div>
     </div>
   );

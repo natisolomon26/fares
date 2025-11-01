@@ -1,47 +1,51 @@
 // src/app/login/page.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import AuthCard from "@/app/components/auth/AuthCard";
-import AuthLink from "@/app/components/auth/AuthLink";
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
+import { signIn } from '@/actions/auth';
+import AuthCard from '@/app/components/auth/AuthCard';
+import AuthLink from '@/app/components/auth/AuthLink';
+import { useEffect } from 'react';
+
+// Submit button with loading state
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-70"
+    >
+      {pending ? 'Signing in...' : 'Sign In'}
+    </button>
+  );
+}
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [state, formAction] = useActionState(signIn, null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    // TODO: Replace with real auth logic (e.g., fetch API)
-    console.log("Login attempt:", { email, password });
-    
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      // Redirect to dashboard on success
-      router.push("/dashboard");
-    }, 1000);
-  };
+  // Optional: log errors during dev
+  useEffect(() => {
+    if (state && 'message' in state) {
+      console.error('Login error:', state.message);
+    }
+  }, [state]);
 
   return (
     <AuthCard
       title="Welcome Back"
       subtitle="Sign in to manage your church members"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form action={formAction} className="space-y-6">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-1">
             Email Address
           </label>
           <input
             id="email"
+            name="email"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none transition"
             placeholder="admin@yourchurch.org"
             required
@@ -53,32 +57,25 @@ export default function LoginPage() {
             <label htmlFor="password" className="block text-sm font-medium text-text-primary">
               Password
             </label>
-            <a href="#" className="text-sm text-primary-600 hover:underline">
-              Forgot password?
-            </a>
           </div>
           <input
             id="password"
+            name="password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-200 focus:border-primary-500 outline-none transition"
             placeholder="••••••••"
             required
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-3 px-4 rounded-lg font-medium text-white transition ${
-            loading
-              ? "bg-primary-400 cursor-not-allowed"
-              : "bg-primary-600 hover:bg-primary-700"
-          }`}
-        >
-          {loading ? "Signing in..." : "Sign In"}
-        </button>
+        {/* Display error if any */}
+        {state && 'message' in state && (
+          <p className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">
+            {state.message}
+          </p>
+        )}
+
+        <SubmitButton />
       </form>
 
       <AuthLink
