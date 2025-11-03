@@ -2,7 +2,7 @@
 "use client";
 
 import Modal from "../ui/Modal";
-import { User, Users, Calendar, Phone } from "lucide-react";
+import { Users, Calendar, Phone } from "lucide-react";
 import { Member } from "@/app/types/members";
 
 interface ViewMemberModalProps {
@@ -16,52 +16,71 @@ export default function ViewMemberModal({ member, isOpen, onClose }: ViewMemberM
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Member Details">
-      <div className="space-y-5">
-        {/* Name */}
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-            <User className="w-6 h-6 text-primary-600" />
+      <div className="space-y-6">
+        {/* Header: Avatar & Name */}
+        <div className="flex items-center gap-4 border-b pb-4">
+          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+            {member.firstName.charAt(0)}{member.lastName.charAt(0)}
           </div>
           <div>
-            <p className="font-semibold text-text-primary text-lg">
+            <p className="text-xl font-semibold text-text-primary">
               {member.firstName} {member.middleName} {member.lastName}
             </p>
-            <p className="text-sm text-text-secondary capitalize">
-              {member.status === 'family' ? 'Family' : 'Single'}
-            </p>
+            <span
+              className={`px-2 py-1 text-xs rounded-full font-medium mt-1 inline-block ${
+                member.status === "family" 
+                  ? "bg-blue-100 text-blue-800"
+                  : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {member.status === "family" ? "Family" : "Single"}
+            </span>
           </div>
         </div>
 
-        {/* Details */}
-        <div className="space-y-3 text-sm">
+        {/* Contact & Join Date */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-text-secondary text-sm">
           {member.phone && (
-            <div className="flex items-center gap-2 text-text-secondary">
-              <Phone className="w-4 h-4" />
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-gray-400" />
               <span>{member.phone}</span>
             </div>
           )}
-          <div className="flex items-center gap-2 text-text-secondary">
-            <Calendar className="w-4 h-4" />
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-gray-400" />
             <span>Joined: {new Date(member.joinDate).toLocaleDateString()}</span>
           </div>
         </div>
 
-        {/* Children (if family) */}
-        {member.status === 'family' && member.children && member.children.length > 0 && (
+        {/* Children Section */}
+        {member.status === "family" && member.children && member.children.length > 0 && (
           <div>
-            <h4 className="font-medium text-text-primary flex items-center gap-2 mb-2">
+            <h4 className="text-text-primary font-medium flex items-center gap-2 mb-2">
               <Users className="w-4 h-4" />
               Children ({member.children.length})
             </h4>
-            <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
               {member.children.map((child, idx) => (
-                <div key={idx} className="text-text-secondary text-sm">
-                  • {child.firstName} {child.lastName}
-                </div>
+                <span
+                  key={idx}
+                  className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium"
+                >
+                  {child.firstName} {child.lastName}
+                </span>
               ))}
             </div>
           </div>
         )}
+
+        {/* Footer */}
+        <div className="flex justify-end pt-4 border-t border-gray-100">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </Modal>
   );

@@ -1,6 +1,6 @@
 // src/app/api/members/route.ts
 import { connectToDatabase } from '@/lib/mongodb';
-import Member from '@/models/Members';
+import Member from '@/models/Member';
 import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {

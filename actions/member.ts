@@ -2,48 +2,56 @@
 'use server';
 
 import { connectToDatabase } from '@/lib/mongodb';
-import Member from '@/models/Members';
+import Member from '@/models/Member';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export async function createMember(formData: FormData) {
   const cookieStore = await cookies();
   const userId = cookieStore.get('user_id')?.value;
-  const status = formData.get('status');
-  console.log('Received status:', status, typeof status); // Should be 'single' or 'family'
-  
 
-  if (!userId) {
-    throw new Error('Unauthorized');
-  }
+  if (!userId) throw new Error('Unauthorized');
 
   await connectToDatabase();
 
-  // Build children array safely
+  const status = formData.get('status') === 'family' ? 'family' : 'single';
+
   const children: { firstName: string; lastName: string }[] = [];
-  if (formData.get('status') === 'family') {
-    const firstNames = formData.getAll('childFirstName').filter(f => typeof f === 'string' && f.trim());
-    const lastNames = formData.getAll('childLastName').map(l => (typeof l === 'string' ? l.trim() : ''));
-    
+  if (status === 'family') {
+    const firstNames = formData
+      .getAll('childFirstName')
+      .filter(f => typeof f === 'string' && f.trim());
+    const lastNames = formData
+      .getAll('childLastName')
+      .map(l => (typeof l === 'string' ? l.trim() : ''));
+
     for (let i = 0; i < firstNames.length; i++) {
-      children.push({
-        firstName: firstNames[i] as string,
-        lastName: lastNames[i] || '',
-      });
+      children.push({ firstName: firstNames[i] as string, lastName: lastNames[i] || '' });
     }
   }
 
-  const memberData = {
+  await Member.create({
     firstName: formData.get('firstName') as string,
-    middleName: formData.get('middleName') as string || undefined,
+    middleName: (formData.get('middleName') as string) || undefined,
     lastName: formData.get('lastName') as string,
-    phone: formData.get('phone') as string || undefined,
+    phone: (formData.get('phone') as string) || undefined,
     joinDate: new Date(formData.get('joinDate') as string),
-    status: formData.get('status') === 'family' ? 'family' : 'single',
+    status,
     children,
     user: userId,
-  };
+  });
 
-  await Member.create(memberData);
-  redirect('/dashboard/members'); // Refreshes the page with new data
+  redirect('/member');
+}
+
+export async function updateMember(id: string) {
+  await connectToDatabase();
+  const updated = await Member.findByIdAndUpdate(id).lean();
+  return JSON.parse(JSON.stringify(updated)); // Convert to plain object
+}
+
+export async function deleteMember(id: string) {
+  await connectToDatabase();
+  await Member.findByIdAndDelete(id);
+  return { success: true };
 }
