@@ -1,7 +1,7 @@
 // src/components/dashboard/DashboardLayout.tsx
 import { ReactNode } from "react";
-import Sidebar from "../layout/Sidebar";
-import Header from "../layout/Header";
+import Sidebar from "./Sidebar";
+import Header from "./Header";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (

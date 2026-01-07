@@ -71,7 +71,7 @@ export default function UpdateMemberModal({
     e.preventDefault();
 
     // Call server action to update
-    const updatedMember = await updateMember(member._id);
+    const updatedMember = await updateMember(member._id );
 
     // Update state in parent table
     onUpdate(updatedMember);
