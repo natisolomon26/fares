@@ -1,6 +1,5 @@
 // app/dashboard/members/page.tsx
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { connectToDatabase } from '@/lib/mongodb';
 import Member from '@/models/Member';
 import DashboardLayout from '@/app/components/layout/DashboardLayout';
@@ -10,10 +9,6 @@ import MemberSummaryCards from '@/app/components/dashboard/members/MemberSummary
 export default async function MembersPage() {
   const cookieStore = await cookies();
   const userId = cookieStore.get('user_id')?.value;
-
-  if (!userId) {
-    redirect('/login');
-  }
 
   await connectToDatabase();
   const members = await Member.find({ user: userId }).lean();

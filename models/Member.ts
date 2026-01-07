@@ -1,32 +1,25 @@
 // src/models/Member.ts
-import { Schema, model, models } from 'mongoose';
+import { Schema, model, models, Types } from "mongoose";
 
-const childSchema = new Schema(
-  {
-    firstName: { type: String, required: true, trim: true },
-    lastName: { type: String, required: true, trim: true },
-    age: { type: Number, min: 0, max: 120 },
-  },
-  { _id: false }
-);
+const childSchema = new Schema({
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+});
 
 const memberSchema = new Schema(
   {
-    firstName: { type: String, required: true, trim: true },
-    middleName: { type: String, trim: true },
-    lastName: { type: String, required: true, trim: true },
-    phone: {
-      type: String,
-      trim: true,
-      match: [/^\+?[\d\s\-\(\)]{7,15}$/, 'Invalid phone number'],
-    },
-    joinDate: { type: Date, required: true, default: Date.now },
-    status: { type: String, enum: ['single', 'family'], default: 'single' },
+    firstName: { type: String, required: true },
+    middleName: { type: String },
+    lastName: { type: String, required: true },
+    phone: { type: String },
+    joinDate: { type: Date, required: true },
+    status: { type: String, enum: ["single", "family"], default: "single" },
     children: [childSchema],
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    church: { type: Types.ObjectId, ref: "Church", required: true }, // link to Church
+    createdBy: { type: Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
 );
 
-const Member = models.Member || model('Member', memberSchema);
+const Member = models.Member || model("Member", memberSchema);
 export default Member;
