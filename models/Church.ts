@@ -1,4 +1,5 @@
-import mongoose, { Schema, models } from "mongoose";
+// models/Church.ts
+import mongoose, { Schema, models, model } from "mongoose";
 
 const ChurchSchema = new Schema(
   {
@@ -12,4 +13,7 @@ const ChurchSchema = new Schema(
   { timestamps: true }
 );
 
-export default models.Church || mongoose.model("Church", ChurchSchema);
+// Check if model exists, otherwise create it
+const Church = models.Church || model("Church", ChurchSchema);
+
+export default Church;

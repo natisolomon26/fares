@@ -1,4 +1,4 @@
-// app/context/AuthContext.tsx
+// app/context/AuthContext.tsx - UPDATED VERSION
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
@@ -37,11 +37,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('/api/auth/me')
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include', // CRITICAL: Send cookies
+      })
+      
       if (response.ok) {
         const data = await response.json()
         setUser(data.user)
       } else {
+        console.log('Auth check failed, status:', response.status)
         setUser(null)
       }
     } catch (error) {
@@ -59,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        credentials: 'include', // CRITICAL: Send/Receive cookies
       })
 
       const data = await response.json()
@@ -85,13 +90,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, churchName }),
+        credentials: 'include', // CRITICAL: Send/Receive cookies
       })
 
       const data = await response.json()
 
       if (response.ok) {
         setUser(data.user)
-        router.push('/')
+        router.push('/') // Changed from /dashboard to /
         return { success: true }
       } else {
         return { success: false, message: data.message || 'Registration failed' }
@@ -106,7 +112,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      await fetch('/api/auth/logout', { 
+        method: 'POST',
+        credentials: 'include', // CRITICAL: Send cookies
+      })
       setUser(null)
       router.push('/')
     } catch (error) {

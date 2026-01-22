@@ -1,3 +1,4 @@
+// models/User.ts - MAKE SURE CHURCH IS REQUIRED
 import mongoose, { Schema, models } from "mongoose";
 
 const UserSchema = new Schema(
@@ -22,7 +23,7 @@ const UserSchema = new Schema(
     church: {
       type: Schema.Types.ObjectId,
       ref: "Church",
-      required: true,
+      required: true, // MUST BE TRUE
     },
   },
   { timestamps: true }

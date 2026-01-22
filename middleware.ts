@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
   }
 
   // If user is authenticated and trying to access auth page
-  if (token && pathname === '/auth') {
+  if (token && pathname === '/') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

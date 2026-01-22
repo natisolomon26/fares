@@ -1,24 +1,36 @@
-// app/auth/page.tsx
+// app/page.tsx (your home/auth page)
 'use client'
 
-import { useState } from 'react'
-import { Eye, EyeOff, Church, Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react'
-import { useAuth } from '@/app/context/AuthContext'
+import { useState, useEffect } from 'react'
+import { Eye, EyeOff, Church, Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react'
+import { useAuth } from './context/AuthContext'
 
 export default function AuthPage() {
   const { login, register, isLoading } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     churchName: '',
   })
 
+  // Clear success message after 5 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess('')
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [success])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
 
     // Validate form
     if (!formData.email || !formData.password) {
@@ -39,8 +51,34 @@ export default function AuthPage() {
       result = await register(formData.email, formData.password, formData.churchName)
     }
 
-    if (!result.success) {
+    if (result.success) {
+      if (!isLogin) {
+        // After successful registration
+        setSuccess('Account created successfully! Please sign in with your credentials.')
+        
+        // Auto-clear form
+        setFormData({
+          email: formData.email, // Keep email filled
+          password: '', // Clear password
+          churchName: '', // Clear church name
+        })
+        
+        // Auto-switch to login after 1.5 seconds
+        setTimeout(() => {
+          setIsLogin(true)
+          setSuccess('Account created successfully! Please sign in.')
+        }, 1500)
+      }
+    } else {
       setError(result.message || 'Authentication failed')
+      
+      // If it's a "user already exists" error on registration, suggest login
+      if (!isLogin && result.message?.toLowerCase().includes('already exists')) {
+        setTimeout(() => {
+          setIsLogin(true)
+          setError('Account already exists. Please sign in instead.')
+        }, 2000)
+      }
     }
   }
 
@@ -49,8 +87,9 @@ export default function AuthPage() {
       ...prev,
       [e.target.name]: e.target.value
     }))
-    // Clear error when user starts typing
+    // Clear messages when user starts typing
     if (error) setError('')
+    if (success) setSuccess('')
   }
 
   return (
@@ -121,7 +160,7 @@ export default function AuthPage() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-2xl font-bold text-white">
-                    {isLogin ? 'Welcome Back, Pastor' : 'Start Your Journey'}
+                    {isLogin ? 'Welcome Back, Pastor' : 'Join ChurchFlow'}
                   </h2>
                   <p className="text-emerald-100/60 text-sm mt-1">
                     {isLogin ? 'Access your ministry dashboard' : 'Create your pastor account'}
@@ -140,6 +179,7 @@ export default function AuthPage() {
                   onClick={() => {
                     setIsLogin(true)
                     setError('')
+                    setSuccess('')
                   }}
                   className={`flex-1 py-2.5 rounded-lg text-center font-medium transition-all text-sm ${isLogin 
                     ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow' 
@@ -152,6 +192,7 @@ export default function AuthPage() {
                   onClick={() => {
                     setIsLogin(false)
                     setError('')
+                    setSuccess('')
                   }}
                   className={`flex-1 py-2.5 rounded-lg text-center font-medium transition-all text-sm ${!isLogin 
                     ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow' 
@@ -165,9 +206,17 @@ export default function AuthPage() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="p-8 pt-0">
               <div className="space-y-5">
+                {/* Success Message */}
+                {success && (
+                  <div className="flex items-center gap-2 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg animate-fadeIn">
+                    <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    <p className="text-sm text-emerald-200">{success}</p>
+                  </div>
+                )}
+
                 {/* Error Message */}
                 {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg animate-fadeIn">
                     <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
                     <p className="text-sm text-red-200">{error}</p>
                   </div>
@@ -242,6 +291,7 @@ export default function AuthPage() {
                       className="w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-emerald-100/40 focus:outline-none focus:border-yellow-200/50 focus:ring-1 focus:ring-yellow-200/20 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="••••••••"
                       required
+                      minLength={8}
                     />
                     <button
                       type="button"
@@ -286,6 +336,7 @@ export default function AuthPage() {
                     onClick={() => {
                       setIsLogin(!isLogin)
                       setError('')
+                      setSuccess('')
                     }}
                     disabled={isLoading}
                     className="ml-1 font-semibold text-yellow-200 hover:text-yellow-300 transition-colors disabled:opacity-50"
@@ -303,6 +354,18 @@ export default function AuthPage() {
                 </p>
               </div>
             </form>
+
+            {/* Helpful Tips */}
+            <div className="px-8 pb-8">
+              <div className="pt-6 border-t border-white/10">
+                <p className="text-xs text-emerald-100/40 text-center">
+                  {isLogin 
+                    ? 'Tip: Use the email and password you registered with'
+                    : 'Note: After registration, you will be asked to sign in'
+                  }
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

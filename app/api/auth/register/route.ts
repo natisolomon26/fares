@@ -1,3 +1,4 @@
+// app/api/auth/register/route.ts - UPDATED VERSION
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectToDatabase } from "@/lib/mongodb";
@@ -19,6 +20,8 @@ export async function POST(req: Request) {
   const password = body.password;
   const churchName = body.churchName?.trim();
 
+  console.log("Registration attempt:", { email, churchName }); // Debug log
+
   if (!email || !password || !churchName) {
     return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
   }
@@ -29,49 +32,70 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "User already exists" }, { status: 409 });
   }
 
-  // Create or find the church
-  const church = await Church.findOneAndUpdate(
-    { name: churchName },
-    { $setOnInsert: { name: churchName } },
-    { new: true, upsert: true }
-  );
+  try {
+    // Create or find church
+    let church = await Church.findOne({ name: churchName });
+    
+    if (!church) {
+      console.log("Creating new church:", churchName);
+      church = await Church.create({ name: churchName });
+    } else {
+      console.log("Found existing church:", churchName);
+    }
 
-  // Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("Church created/found:", church._id, church.name);
 
-  // Create the user
-  const user = await User.create({
-    email,
-    password: hashedPassword,
-    church: church._id,
-  });
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Sign JWT token
-  const token = signToken(user._id.toString());
+    // Create user WITH church reference
+    const user = await User.create({
+      email,
+      password: hashedPassword,
+      church: church._id, // This is crucial!
+      role: "PASTOR",
+    });
 
-  // Return response with httpOnly cookie
-  const response = NextResponse.json(
-    {
-      message: "Account created successfully",
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        church: { id: church._id, name: church.name },
+    console.log("User created with church:", user._id, user.church);
+
+    // Sign JWT token
+    const token = signToken(user._id.toString());
+
+    // Return response
+    const response = NextResponse.json(
+      {
+        message: "Account created successfully",
+        user: {
+          id: user._id,
+          email: user.email,
+          role: user.role,
+          church: { id: church._id, name: church.name },
+        },
       },
-    },
-    { status: 201 }
-  );
+      { status: 201 }
+    );
 
-  response.cookies.set({
-    name: "churchflow_token",
-    value: token,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-    sameSite: "lax",
-  });
+    response.cookies.set({
+      name: "churchflow_token",
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      sameSite: "lax",
+    });
 
-  return response;
+    return response;
+
+  } catch (error: unknown) {
+  console.error("Login error:", error);
+
+  // Narrow error to Error type
+  const message = error instanceof Error ? error.message : String(error);
+
+  return NextResponse.json({ 
+    message: "Login failed", 
+    error: message
+  }, { status: 500 });
+}
 }
