@@ -62,7 +62,7 @@ export default function AuthPage() {
                 </svg>
               </div>
               <p className="text-2xl italic text-white mb-4 leading-relaxed">
-                "I am the good shepherd. The good shepherd lays down his life for the sheep. Ameen"
+                "I am the good shepherd. The good shepherd lays down his life for the sheep."
               </p>
               <p className="text-emerald-100/60 font-medium">— John 10:11</p>
             </div>
