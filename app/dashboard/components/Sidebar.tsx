@@ -7,8 +7,10 @@ import {
   Music, Home, Bell, Heart, Video, UserPlus, FileCheck
 } from 'lucide-react'
 import { useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 
 const Sidebar = () => {
+  const { user, logout } = useAuth()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [activeMenu, setActiveMenu] = useState('dashboard')
 
@@ -124,22 +126,31 @@ const Sidebar = () => {
             ))}
 
             {/* Pastor Profile */}
-            <div className={`mt-6 ${isCollapsed ? '' : 'flex items-center gap-3 p-3 rounded-xl hover:bg-yellow-200/80 transition-all cursor-pointer group'}`}>
+            <div className={`mt-6 ${isCollapsed ? '' : 'flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-yellow-500/10 transition-all cursor-pointer group border border-white/10'}`}>
               <div className={`w-10 h-10 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 flex items-center justify-center flex-shrink-0 ${isCollapsed ? 'mx-auto' : ''}`}>
-                <span className="font-bold text-emerald-900">P</span>
+                <span className="font-bold text-emerald-900">
+                  {user?.email?.charAt(0).toUpperCase() || 'P'}
+                </span>
               </div>
               {!isCollapsed && (
-                <>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-white truncate group-hover:text-emerald-900">Pastor John</p>
-                    <p className="text-xs text-emerald-100/60 truncate group-hover:text-emerald-800">Grace Community Church</p>
-                  </div>
-                  <LogOut className="w-4 h-4 text-emerald-100/60 group-hover:text-emerald-800 flex-shrink-0" />
-                </>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-white truncate group-hover:text-yellow-100">
+                    {user?.email || 'Pastor'}
+                  </p>
+                  <p className="text-xs text-emerald-100/60 truncate group-hover:text-yellow-200/80">
+                    {user?.church?.name || 'Church'}
+                  </p>
+                </div>
               )}
+              <button 
+                onClick={logout}
+                className="w-4 h-4 text-emerald-100/60 group-hover:text-yellow-200/80 flex-shrink-0 hover:scale-110 transition-transform"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
               {isCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-emerald-900/80 backdrop-blur-sm rounded text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  <div>Pastor John</div>
+                  <div>{user?.email || 'Pastor'}</div>
                   <div className="text-xs text-emerald-100/60">Sign Out</div>
                 </div>
               )}

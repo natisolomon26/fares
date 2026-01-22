@@ -2,21 +2,46 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, EyeOff, Church, Mail, Lock, User, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, Church, Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react'
+import { useAuth } from '@/app/context/AuthContext'
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true) // Start with login by default
+  const { login, register, isLoading } = useAuth()
+  const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     churchName: '',
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log(`${isLogin ? 'Login' : 'Signup'} attempt:`, formData)
-    // Handle form submission here
+    setError('')
+
+    // Validate form
+    if (!formData.email || !formData.password) {
+      setError('Please fill in all required fields')
+      return
+    }
+
+    if (!isLogin && !formData.churchName) {
+      setError('Church name is required for registration')
+      return
+    }
+
+    // Make API call
+    let result
+    if (isLogin) {
+      result = await login(formData.email, formData.password)
+    } else {
+      result = await register(formData.email, formData.password, formData.churchName)
+    }
+
+    if (!result.success) {
+      setError(result.message || 'Authentication failed')
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,6 +49,8 @@ export default function AuthPage() {
       ...prev,
       [e.target.name]: e.target.value
     }))
+    // Clear error when user starts typing
+    if (error) setError('')
   }
 
   return (
@@ -109,7 +136,11 @@ export default function AuthPage() {
               {/* Toggle Switch */}
               <div className="flex mb-6 p-1 rounded-xl bg-emerald-900/30 border border-white/10">
                 <button
-                  onClick={() => setIsLogin(true)}
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(true)
+                    setError('')
+                  }}
                   className={`flex-1 py-2.5 rounded-lg text-center font-medium transition-all text-sm ${isLogin 
                     ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow' 
                     : 'text-emerald-100/70 hover:text-white'}`}
@@ -117,7 +148,11 @@ export default function AuthPage() {
                   Sign In
                 </button>
                 <button
-                  onClick={() => setIsLogin(false)}
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(false)
+                    setError('')
+                  }}
                   className={`flex-1 py-2.5 rounded-lg text-center font-medium transition-all text-sm ${!isLogin 
                     ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow' 
                     : 'text-emerald-100/70 hover:text-white'}`}
@@ -130,6 +165,14 @@ export default function AuthPage() {
             {/* Form */}
             <form onSubmit={handleSubmit} className="p-8 pt-0">
               <div className="space-y-5">
+                {/* Error Message */}
+                {error && (
+                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                    <p className="text-sm text-red-200">{error}</p>
+                  </div>
+                )}
+
                 {/* Email */}
                 <div className="group">
                   <label className="block text-sm font-medium text-emerald-100/80 mb-2">
@@ -142,7 +185,8 @@ export default function AuthPage() {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-emerald-100/40 focus:outline-none focus:border-yellow-200/50 focus:ring-1 focus:ring-yellow-200/20 transition-all text-sm"
+                      disabled={isLoading}
+                      className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-emerald-100/40 focus:outline-none focus:border-yellow-200/50 focus:ring-1 focus:ring-yellow-200/20 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="pastor@yourchurch.org"
                       required
                     />
@@ -162,7 +206,8 @@ export default function AuthPage() {
                         name="churchName"
                         value={formData.churchName}
                         onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-emerald-100/40 focus:outline-none focus:border-yellow-200/50 focus:ring-1 focus:ring-yellow-200/20 transition-all text-sm"
+                        disabled={isLoading}
+                        className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-emerald-100/40 focus:outline-none focus:border-yellow-200/50 focus:ring-1 focus:ring-yellow-200/20 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         placeholder="Grace Community Church"
                         required={!isLogin}
                       />
@@ -177,7 +222,11 @@ export default function AuthPage() {
                       Password
                     </label>
                     {isLogin && (
-                      <button type="button" className="text-xs text-yellow-200 hover:text-yellow-300 transition-colors">
+                      <button 
+                        type="button" 
+                        className="text-xs text-yellow-200 hover:text-yellow-300 transition-colors disabled:opacity-50"
+                        disabled={isLoading}
+                      >
                         Forgot password?
                       </button>
                     )}
@@ -189,14 +238,16 @@ export default function AuthPage() {
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-emerald-100/40 focus:outline-none focus:border-yellow-200/50 focus:ring-1 focus:ring-yellow-200/20 transition-all text-sm"
+                      disabled={isLoading}
+                      className="w-full pl-10 pr-10 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-emerald-100/40 focus:outline-none focus:border-yellow-200/50 focus:ring-1 focus:ring-yellow-200/20 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="••••••••"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-emerald-400/70 hover:text-yellow-200 transition-colors"
+                      disabled={isLoading}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-emerald-400/70 hover:text-yellow-200 transition-colors disabled:opacity-50"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -211,10 +262,20 @@ export default function AuthPage() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  className="w-full py-3.5 px-6 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/40 transition-all duration-300 mt-2 flex items-center justify-center gap-2"
+                  disabled={isLoading}
+                  className="w-full py-3.5 px-6 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-900/30 hover:shadow-emerald-900/40 transition-all duration-300 mt-2 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {isLogin ? 'Sign In to Dashboard' : 'Create Account'}
-                  <ArrowRight className="w-4 h-4" />
+                  {isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>{isLogin ? 'Signing in...' : 'Creating account...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{isLogin ? 'Sign In to Dashboard' : 'Create Account'}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
 
                 {/* Switch Form Link */}
@@ -222,8 +283,12 @@ export default function AuthPage() {
                   {isLogin ? "Don't have an account?" : "Already have an account?"}
                   <button
                     type="button"
-                    onClick={() => setIsLogin(!isLogin)}
-                    className="ml-1 font-semibold text-yellow-200 hover:text-yellow-300 transition-colors"
+                    onClick={() => {
+                      setIsLogin(!isLogin)
+                      setError('')
+                    }}
+                    disabled={isLoading}
+                    className="ml-1 font-semibold text-yellow-200 hover:text-yellow-300 transition-colors disabled:opacity-50"
                   >
                     {isLogin ? 'Sign up' : 'Sign in'}
                   </button>
