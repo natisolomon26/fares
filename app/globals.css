@@ -2,3 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Add this to your globals.css or main CSS file */
+
+/* Custom scrollbar for sidebar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thumb-emerald-700::-webkit-scrollbar-thumb {
+  background-color: rgba(16, 185, 129, 0.5);
+  border-radius: 3px;
+}
+
+.scrollbar-thumb-emerald-700::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(16, 185, 129, 0.8);
+}
+
+.scrollbar-track-emerald-900::-webkit-scrollbar-track {
+  background-color: rgba(6, 78, 59, 0.3);
+}
