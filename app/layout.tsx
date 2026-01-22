@@ -1,6 +1,5 @@
 // src/app/layout.tsx
 import { Inter } from "next/font/google";
-import ReactQueryProvider from "./providers/ReactQueryProviders";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -11,9 +10,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-         <ReactQueryProvider>
           {children}
-         </ReactQueryProvider>
       </body>
     </html>
   );
