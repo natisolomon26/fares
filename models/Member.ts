@@ -1,22 +1,40 @@
 // src/models/Member.ts
 import { Schema, model, models, Types } from "mongoose";
-
-const childSchema = new Schema({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-});
-
+// src/models/Member.ts
 const memberSchema = new Schema(
   {
     firstName: { type: String, required: true },
     middleName: { type: String },
     lastName: { type: String, required: true },
+
+    gender: {
+      type: String,
+      enum: ["male", "female"],
+      required: true,
+    },
+
     phone: { type: String },
-    joinDate: { type: Date, required: true },
-    status: { type: String, enum: ["single", "family"], default: "single" },
-    children: [childSchema],
-    church: { type: Types.ObjectId, ref: "Church", required: true }, // link to Church
-    createdBy: { type: Types.ObjectId, ref: "User", required: true },
+    joinDate: { type: Date, default: Date.now },
+
+    status: {
+      type: String,
+      enum: ["single", "family"],
+      default: "single",
+    },
+
+    children: [
+      {
+        firstName: { type: String, required: true },
+        lastName: { type: String, required: true },
+        gender: {
+          type: String,
+          enum: ["male", "female"],
+          required: true,
+        },
+      },
+    ],
+
+    church: { type: Types.ObjectId, ref: "Church", required: true },
   },
   { timestamps: true }
 );

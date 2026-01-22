@@ -1,27 +1,26 @@
 // src/lib/auth.ts
-import { verifyToken } from "./jwt";
+import jwt from "jsonwebtoken";
 import User from "@/models/User";
-import { connectToDatabase } from "./mongodb";
+import Church from "@/models/Church";
 
-export async function getUserFromRequest(req: Request) {
-  await connectToDatabase();
+const JWT_SECRET = process.env.JWT_SECRET!;
 
-  const auth = req.headers.get("authorization");
-  if (!auth || !auth.startsWith("Bearer ")) return null;
+export function signToken(userId: string) {
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" });
+}
 
+export async function getUserFromToken(req: Request) {
   try {
-    const token = auth.split(" ")[1];
-    const decoded: any = verifyToken(token);
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader) return null;
 
-    const user = await User.findById(decoded.sub);
-    if (!user) return null;
+    const token = authHeader.split(" ")[1];
+    if (!token) return null;
 
-    return {
-      id: user._id.toString(),
-      role: user.role,
-      church: user.churchName, // or church _id if you link churches
-    };
-  } catch {
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    const user = await User.findById(decoded.userId).populate("church");
+    return user;
+  } catch (err) {
     return null;
   }
 }
