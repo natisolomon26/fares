@@ -1,101 +1,80 @@
-// app/api/auth/register/route.ts - UPDATED VERSION
+// Updated register API
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
-import Church from "@/models/Church";
+import Church from "@/models/Church"; // Import Church model
 import { signToken } from "@/lib/auth";
 
 export async function POST(req: Request) {
-  await connectToDatabase();
-
-  let body;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ message: "Invalid request" }, { status: 400 });
-  }
+    await connectToDatabase();
 
-  const email = body.email?.toLowerCase().trim();
-  const password = body.password;
-  const churchName = body.churchName?.trim();
+    const { email, password, churchName } = await req.json();
 
-  console.log("Registration attempt:", { email, churchName }); // Debug log
-
-  if (!email || !password || !churchName) {
-    return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
-  }
-
-  // Check if user already exists
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    return NextResponse.json({ message: "User already exists" }, { status: 409 });
-  }
-
-  try {
-    // Create or find church
-    let church = await Church.findOne({ name: churchName });
-    
-    if (!church) {
-      console.log("Creating new church:", churchName);
-      church = await Church.create({ name: churchName });
-    } else {
-      console.log("Found existing church:", churchName);
+    if (!email || !password || !churchName) {
+      return NextResponse.json(
+        { message: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
-    console.log("Church created/found:", church._id, church.name);
+    const exists = await User.findOne({ email });
+    if (exists) {
+      return NextResponse.json(
+        { message: "User already exists" },
+        { status: 409 }
+      );
+    }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // 1. Create Church first
+    const church = await Church.create({
+      name: churchName,
+      // You can add more church details here
+    });
 
-    // Create user WITH church reference
+    const hashed = await bcrypt.hash(password, 10);
+
+    // 2. Create User with church reference
     const user = await User.create({
       email,
-      password: hashedPassword,
-      church: church._id, // This is crucial!
+      password: hashed,
       role: "PASTOR",
+      church: church._id, // Store church ObjectId
     });
 
-    console.log("User created with church:", user._id, user.church);
+    // 3. Update Church with pastor reference
+    await Church.findByIdAndUpdate(church._id, { pastor: user._id });
 
-    // Sign JWT token
-    const token = signToken(user._id.toString());
+    const token = signToken({
+      userId: user._id.toString(),
+      role: user.role,
+    });
 
-    // Return response
-    const response = NextResponse.json(
-      {
-        message: "Account created successfully",
-        user: {
-          id: user._id,
-          email: user.email,
-          role: user.role,
-          church: { id: church._id, name: church.name },
-        },
+    const res = NextResponse.json({
+      message: "Account created",
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        church: church, // Include church details
       },
-      { status: 201 }
-    );
+    });
 
-    response.cookies.set({
-      name: "churchflow_token",
-      value: token,
+    res.cookies.set("churchflow_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7,
-      sameSite: "lax",
     });
 
-    return response;
-
-  } catch (error: unknown) {
-  console.error("Login error:", error);
-
-  // Narrow error to Error type
-  const message = error instanceof Error ? error.message : String(error);
-
-  return NextResponse.json({ 
-    message: "Login failed", 
-    error: message
-  }, { status: 500 });
-}
+    return res;
+  } catch (error) {
+    console.error("Register error:", error);
+    return NextResponse.json(
+      { message: "Registration failed" },
+      { status: 500 }
+    );
+  }
 }

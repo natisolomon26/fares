@@ -1,7 +1,15 @@
-// models/User.ts - MAKE SURE CHURCH IS REQUIRED
-import mongoose, { Schema, models } from "mongoose";
+// Updated User model
+import mongoose, { Schema, Document, models, model } from "mongoose";
 
-const UserSchema = new Schema(
+export interface IUser extends Document {
+  email: string;
+  password: string;
+  role: "PASTOR";
+  church: mongoose.Types.ObjectId; // Changed to ObjectId
+  createdAt: Date;
+}
+
+const UserSchema = new Schema<IUser>(
   {
     email: {
       type: String,
@@ -18,15 +26,14 @@ const UserSchema = new Schema(
       type: String,
       enum: ["PASTOR"],
       default: "PASTOR",
-      immutable: true,
     },
     church: {
       type: Schema.Types.ObjectId,
-      ref: "Church",
-      required: true, // MUST BE TRUE
+      ref: "Church", // References a Church model
+      required: true,
     },
   },
   { timestamps: true }
 );
 
-export default models.User || mongoose.model("User", UserSchema);
+export default models.User || model<IUser>("User", UserSchema);

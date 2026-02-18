@@ -1,17 +1,18 @@
-// app/context/AuthContext.tsx - UPDATED VERSION
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 
+interface Church {
+  id: string
+  name: string
+}
+
 interface User {
   id: string
   email: string
   role: string
-  church: {
-    id: string
-    name: string
-  } | null
+  church: Church | null
 }
 
 interface AuthContextType {
@@ -30,6 +31,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
+  // Helper to map backend user to frontend User interface
+  const mapUser = (rawUser: any): User => ({
+    id: rawUser._id,
+    email: rawUser.email,
+    role: rawUser.role,
+    church: rawUser.church
+      ? {
+          id: rawUser.church._id,
+          name: rawUser.church.name,
+        }
+      : null,
+  })
+
   // Check if user is authenticated on mount
   useEffect(() => {
     checkAuth()
@@ -38,12 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuth = async () => {
     try {
       const response = await fetch('/api/auth/me', {
-        credentials: 'include', // CRITICAL: Send cookies
+        credentials: 'include', // Send cookies
       })
-      
+
       if (response.ok) {
         const data = await response.json()
-        setUser(data.user)
+        setUser(mapUser(data.user))
       } else {
         console.log('Auth check failed, status:', response.status)
         setUser(null)
@@ -63,13 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-        credentials: 'include', // CRITICAL: Send/Receive cookies
+        credentials: 'include',
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        setUser(data.user)
+        setUser(mapUser(data.user))
         router.push('/dashboard')
         return { success: true }
       } else {
@@ -90,14 +104,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, churchName }),
-        credentials: 'include', // CRITICAL: Send/Receive cookies
+        credentials: 'include',
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        setUser(data.user)
-        router.push('/') // Changed from /dashboard to /
+        setUser(mapUser(data.user))
+        router.push('/dashboard')
         return { success: true }
       } else {
         return { success: false, message: data.message || 'Registration failed' }
@@ -112,9 +126,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { 
+      await fetch('/api/auth/logout', {
         method: 'POST',
-        credentials: 'include', // CRITICAL: Send cookies
+        credentials: 'include',
       })
       setUser(null)
       router.push('/')
