@@ -2,9 +2,9 @@
 'use client'
 
 import { 
-  BarChart3, Users, Calendar, DollarSign, MessageCircle, 
-  FileText, Settings, Church, LogOut, BookOpen, Shield, 
-  Music, Home, Bell, Heart, Video, UserPlus, FileCheck
+  Users,
+  Settings, Church, LogOut,
+  Home, FileCheck, DockIcon 
 } from 'lucide-react'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
@@ -19,6 +19,7 @@ const Sidebar = () => {
   const menuItems = [
     { id: 'dashboard', icon: Home, label: 'Dashboard', path: '/dashboard' },
     { id: 'members', icon: Users, label: 'Members', path: '/dashboard/members' },
+    { id: 'leaving', icon: DockIcon, label: 'Leaving', path: '/dashboard/leaving' },
     { id: 'reports', icon: FileCheck, label: 'Reports', path: '/dashboard/reports' },
     { id: 'settings', icon: Settings, label: 'Settings', path: '/dashboard/settings' },
   ]
