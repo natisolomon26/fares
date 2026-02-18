@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/mongodb";
+import User from "@/models/User";
 import Member from "@/models/Member";
 import { verifyToken } from "@/lib/auth";
 import { Types } from "mongoose";
@@ -65,7 +66,7 @@ export async function GET(
 // PATCH: Update a member
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ id: string }> } // Updated type
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectToDatabase();
@@ -79,6 +80,12 @@ export async function PATCH(
     const decoded = verifyToken(token);
     if (!decoded) {
       return NextResponse.json({ message: "Invalid token" }, { status: 401 });
+    }
+
+    // Get the pastor to access their church ID
+    const pastor = await User.findById(decoded.userId);
+    if (!pastor) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     // Await the params
@@ -108,7 +115,7 @@ export async function PATCH(
       );
     }
 
-    // Update fields
+    // Update fields - preserve existing church and pastorId
     if (firstName) member.firstName = firstName;
     if (middleName !== undefined) member.middleName = middleName;
     if (lastName) member.lastName = lastName;
@@ -123,6 +130,10 @@ export async function PATCH(
         lastName: c.lastName || member.lastName,
       }));
     }
+
+    // Ensure required fields are preserved
+    member.church = member.church || pastor.church; // Keep existing church or use pastor's church
+    member.pastorId = member.pastorId || decoded.userId; // Keep existing pastorId
 
     await member.save();
 
@@ -139,10 +150,10 @@ export async function PATCH(
   }
 }
 
-// DELETE: Delete a member
+// DELETE method (your existing DELETE works fine)
 export async function DELETE(
   req: Request,
-  { params }: { params: Promise<{ id: string }> } // Updated type
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectToDatabase();
@@ -158,10 +169,8 @@ export async function DELETE(
       return NextResponse.json({ message: "Invalid token" }, { status: 401 });
     }
 
-    // Await the params
     const { id } = await params;
 
-    // Validate MongoDB ObjectId
     if (!Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { message: "Invalid member ID" },
@@ -169,7 +178,6 @@ export async function DELETE(
       );
     }
 
-    // Find and delete member, ensuring it belongs to the logged-in pastor
     const member = await Member.findOneAndDelete({
       _id: id,
       pastorId: decoded.userId,
@@ -193,3 +201,4 @@ export async function DELETE(
     );
   }
 }
+
